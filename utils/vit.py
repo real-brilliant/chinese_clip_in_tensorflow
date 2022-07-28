@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Author:  GeekFly
+# @Author:  Jeffrey.Sun
 
 import numpy as np
 import tensorflow as tf
