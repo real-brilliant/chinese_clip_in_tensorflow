@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Author:  GeekFly
+# @Author:  Jeffrey.Sun
 
 import math
 import numpy as np
