@@ -1,26 +1,57 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Author:  GeekFly
+# @Author:  Jeffrey.Sun
 
+import os
+import math
 import numpy as np
 import tensorflow as tf
+from PIL import Image, ImageOps
 
 from utils.bert_huggingface import BertBase
+from utils.bert_tokenizer import FullTokenizer
 from utils.vit import Transformer, VisualTransformer
 
+current_dir, _ = os.path.split(os.path.realpath(__file__))
 img_mean = np.array((0.48145466, 0.4578275, 0.40821073), dtype=np.float32)
 img_var = np.array((0.26862954, 0.26130258, 0.27577711), dtype=np.float32)
+
+
+class ModelConfigs(object):
+    model_dir = os.path.join(current_dir, 'model')
+    model_checkpoint = os.path.join(model_dir, "clip.ckpt")
+    vocab_pth = os.path.join(model_dir, "vocab.txt")
+
+    # configs for ViT-32 + mBERT-huggingface
+    vocab_size = 119547
+    max_seq_len = 512
+    txt_hidden_size = 768
+    txt_num_heads = 12
+    patch_size = 32
+
+
+tokenizer = FullTokenizer(vocab_file=ModelConfigs.vocab_pth, do_lower_case=False)
+
+
+def lazy_property(func):
+    attr_name = "_lazy_" + func.__name__
+
+    @property
+    def _lazy_property(self):
+        if hasattr(self, "_do_lazy") and not self._do_lazy:
+            return func(self)
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, func(self))
+        return getattr(self, attr_name)
+
+    return _lazy_property
 
 
 class TextExample(object):
     """ InputExample for text encoder of UnsupervisedClip """
     def __init__(self, text, max_seq_len=512):
-        self._text = text
+        self.text = text
         self.max_seq_len = max_seq_len
-
-    @lazy_property
-    def text(self):
-        return DocProcessor.text_norm(self._text)
 
     @lazy_property
     def tokens(self):
@@ -195,3 +226,45 @@ class Predictor(object):
             self.name2ph['img_ids']: [img_exm.img_ids for img_exm in img_exms]}
         probs_t2i, probs_i2t = self.sess.run([self.model.probs_t2i, self.model.probs_i2t], feed_dict)
         return probs_t2i, probs_i2t
+
+
+if __name__ == "__main__":
+    def simple_test():
+        import matplotlib.pyplot as plt
+
+        img_files = [
+            "./template/green apple.jpg",
+            "./template/red apple.jpg",
+            "./template/purple apple.png",
+            "./template/Orange Apple.png",
+            "./template/fruit bowl.jpg",
+            "./template/bananas.jpg"]
+        img_exms = [ImageExample(img) for img in img_files]
+
+        zh_texts = ['青苹果', '红苹果', '紫苹果', '橙苹果', '一碗水果', '一串香蕉挂在树上']
+        txt_exms = [TextExample(txt) for txt in zh_texts]
+
+        def plot_heatmap(result_matrix):
+            height, width = result_matrix.shape
+            fig, ax = plt.subplots()
+            fig.set_size_inches(8, 8)
+            im = ax.imshow(result_matrix)
+
+            # Create X & Y Labels
+            ax.set_xticks(np.arange(width))
+            ax.set_yticks(np.arange(height))
+            ax.set_xticklabels(["Image {}".format(i) for i in range(width)])
+            ax.set_yticklabels(["Text {}".format(i) for i in range(height)])
+
+            for i in range(height):
+                for j in range(width):
+                    text = ax.text(j, i, result_matrix[i, j], ha="center", va="center", color='grey', size=20)
+
+            fig.tight_layout()
+            plt.show()
+
+        predictor = Predictor(ModelConfigs.model_checkpoint)
+        probs_t2i, probs_i2t = predictor.predict_probs(txt_exms, img_exms)
+        plot_heatmap(np.around(probs_t2i, decimals=2).T * 100)
+
+    simple_test()
