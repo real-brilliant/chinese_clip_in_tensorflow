@@ -5,8 +5,6 @@
 import numpy as np
 import tensorflow as tf
 
-from zfsun_utils.tf_train_utils import get_shape_list
-
 PAD_ID = 0
 
 
