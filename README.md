@@ -1,6 +1,8 @@
 # clip_in_tensorflow
 
 - chinese CLIP (Contrastive Language-Image Pre-Training) in tensorflow
+<br> - [paper](https://arxiv.org/pdf/2103.00020.pdf)
+<br> - [论文速读](https://mp.weixin.qq.com/s/902luOUrKnJ7kXTxviyALQ)
 - 官方版本 in Pytorch: https://github.com/openai/CLIP
 - 目前仅支持ViT-32 & BERT的版本, 模型下载: 
 <br> - [谷歌网盘](https://drive.google.com/drive/folders/17aECcM7m2aflp9Fl6j8yJfZ-ZSn6v07z?usp=sharing)
